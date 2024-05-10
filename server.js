@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const mysql = require("mysql")
 const multer = require("multer");
 const bcrypt = require("bcryptjs");
+const fs = require("fs");
 
 
 app = express();
@@ -14,6 +15,7 @@ const db = mysql.createConnection({
     password : '',
     database : 'just_backend',
 });
+
 
 db.connect(err => {
     if(err) throw err;
@@ -48,8 +50,13 @@ app.post('/signup', upload.single('image'), function(req, res){
         }
         console.log("Hashed password:", hash);
         
-        const query = 'INSERT INTO people (name, phoneNumber, age, city, email, image, password) VALUES (?,?,?,?,?,?,?)';
-        db.query(query, [name, phoneNumber, age, city, email, req.file ? req.file.path : null, hash], (err, result) => {
+        // Read the file into a buffer
+        let imgBuffer = null;
+        if (req.file) {
+            imgBuffer = fs.readFileSync(req.file.path);
+        }
+        const query = 'INSERT INTO people (name, phoneNumber, age, city, email, image, password, blob_image) VALUES (?,?,?,?,?,?,?,?)';
+        db.query(query, [name, phoneNumber, age, city, email, req.file ? req.file.path : null, hash, imgBuffer], (err, result) => {
             if (err) {
                 console.error("Database error:", err.message);
                 return res.status(500).json({ error: err.message });
